@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jukebox Generativa</title>
+  <style>
+    /* Estilização geral: fundo preto, centralização vertical e horizontal */
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      font-family: sans-serif;
+      color: #fff;
+    }
+
+    /* Contador acima da jukebox */
+    #counter {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    
+    /* Botão de play/pause */
+    #playPauseButton {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 18px;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+      background-color: #444;
+      color: #fff;
+    }
+    
+    /* Estilização da jukebox */
+    .jukebox {
+      width: 300px;
+      height: 400px;
+      background: linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet);
+      border: 5px solid #fff;
+      border-radius: 15px;
+      position: relative;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding-top: 20px;
+    }
+
+    /* Display superior da jukebox (para animação) */
+    .display {
+      width: 80%;
+      height: 40%;
+      background: #000;
+      border: 2px solid #fff;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.1s ease, transform 0.1s ease;
+    }
+
+    /* Área inferior da jukebox (simula botões ou saída de som) */
+    .jukebox::after {
+      content: "";
+      position: absolute;
+      bottom: 10%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60%;
+      height: 10%;
+      background: silver;
+      border: 2px solid #fff;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Contador com label BATIDAS CRIADAS -->
+  <div id="counter">BATIDAS CRIADAS: 0</div>
+
+  <!-- Jukebox com display superior (que será animado) -->
+  <div class="jukebox">
+    <div class="display"></div>
+  </div>
+
+  <!-- Botão de play/pause -->
+  <button id="playPauseButton">play</button>
+
+  <script>
+    // Configuração da API Web Audio
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioContext();
+
+    // Se o AudioContext estiver suspenso (autoplay block), retomamos com clique do usuário
+    document.body.addEventListener('click', () => {
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    });
+
+    let isPlaying = false;
+    let beatCount = 0;
+    const counterEl = document.getElementById('counter');
+    const playPauseButton = document.getElementById('playPauseButton');
+    let nextSongTimeout = null;
+    let beatTimeouts = [];
+
+    // Array de frequências (escala de C maior) para escolher as notas
+    const scale = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88];
+
+    // Função auxiliar para gerar inteiros aleatórios entre min e max (inclusive)
+    function getRandomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    // Função para animar o display da jukebox (alterando cor e fazendo um breve efeito de escala)
+    function animateDisplay() {
+      const display = document.querySelector('.display');
+      const randomHue = Math.floor(Math.random() * 360);
+      display.style.backgroundColor = `hsl(${randomHue}, 100%, 50%)`;
+      display.style.transform = 'scale(1.2)';
+      // Retorna ao estado original após 100ms
+      setTimeout(() => {
+        display.style.transform = 'scale(1)';
+        display.style.backgroundColor = '#000';
+      }, 100);
+    }
+
+    // Função que gera e toca uma “música” generativa de ritmo acelerado
+    function playSong() {
+      if (!isPlaying) return; // Se pausado, não faz nada
+
+      // Define a quantidade de notas da "música" (entre 8 e 16 para variar)
+      const numNotes = getRandomInt(8, 16);
+      const noteDuration = 0.1;    // duração de cada nota (em segundos)
+      const noteInterval = 0.15;   // intervalo entre o início das notas
+      const startTime = audioCtx.currentTime;
+
+      for (let i = 0; i < numNotes; i++) {
+        // Agenda a atualização do contador e a animação do display para cada batida
+        let beatTimeout = setTimeout(() => {
+          if (!isPlaying) return;
+          beatCount++;
+          counterEl.textContent = 'BATIDAS CRIADAS: ' + beatCount;
+          animateDisplay();
+        }, i * noteInterval * 1000);
+        beatTimeouts.push(beatTimeout);
+
+        // Cria um oscilador com envelope de ganho curto para tocar a nota
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        // Seleciona aleatoriamente uma frequência da escala
+        let freq = scale[getRandomInt(0, scale.length - 1)];
+        // Em cerca de 50% das vezes, dobra a frequência (subindo uma oitava)
+        if (Math.random() > 0.5) {
+          freq *= 2;
+        }
+        osc.frequency.setValueAtTime(freq, startTime + i * noteInterval);
+
+        // Cria um envelope simples para evitar cliques
+        gainNode.gain.setValueAtTime(0, startTime + i * noteInterval);
+        gainNode.gain.linearRampToValueAtTime(0.5, startTime + i * noteInterval + 0.01);
+        gainNode.gain.linearRampToValueAtTime(0, startTime + i * noteInterval + noteDuration);
+
+        // Conecta o oscilador e agenda seu início e término
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        osc.start(startTime + i * noteInterval);
+        osc.stop(startTime + i * noteInterval + noteDuration);
+      }
+
+      // Agenda a próxima "música" para tocar quando esta terminar
+      const totalDuration = numNotes * noteInterval + noteDuration;
+      nextSongTimeout = setTimeout(() => {
+        // Limpa os timeouts de batidas já agendados
+        beatTimeouts = [];
+        playSong();
+      }, totalDuration * 1000);
+    }
+
+    // Função para iniciar a reprodução
+    function startPlayback() {
+      if (!isPlaying) {
+        isPlaying = true;
+        playPauseButton.textContent = 'pause';
+        // (Opcional) Reinicia o contador se desejar zerar ao iniciar
+        // beatCount = 0;
+        // counterEl.textContent = 'BATIDAS CRIADAS: ' + beatCount;
+        playSong();
+      }
+    }
+
+    // Função para pausar a reprodução
+    function pausePlayback() {
+      isPlaying = false;
+      playPauseButton.textContent = 'play';
+      // Cancela o próximo agendamento de música
+      if (nextSongTimeout) {
+        clearTimeout(nextSongTimeout);
+        nextSongTimeout = null;
+      }
+      // Cancela todos os timeouts de batidas pendentes
+      beatTimeouts.forEach(timeout => clearTimeout(timeout));
+      beatTimeouts = [];
+    }
+
+    // Evento de clique no botão de play/pause
+    playPauseButton.addEventListener('click', () => {
+      if (!isPlaying) {
+        // Se estiver pausado, inicia a reprodução (resumindo o AudioContext se necessário)
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        startPlayback();
+      } else {
+        // Se estiver tocando, pausa
+        pausePlayback();
+      }
+    });
+  </script>
+</body>
+</html>
