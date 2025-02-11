@@ -18,13 +18,11 @@
       font-family: sans-serif;
       color: #fff;
     }
-
     /* Contador acima da jukebox */
     #counter {
       font-size: 24px;
       margin-bottom: 20px;
     }
-
     /* Estilização da jukebox */
     .jukebox {
       width: 300px;
@@ -41,7 +39,6 @@
       justify-content: flex-start;
       padding-top: 20px;
     }
-
     /* Display superior da jukebox (para animação) */
     .display {
       width: 80%;
@@ -55,7 +52,6 @@
       justify-content: center;
       transition: background-color 0.1s ease, transform 0.1s ease;
     }
-
     /* Control panel: retângulo cinza central para o botão */
     .control-panel {
       position: absolute;
@@ -71,8 +67,7 @@
       align-items: center;
       justify-content: center;
     }
-
-    /* Botão de play/pause (agora dentro da control panel) */
+    /* Botão de play/pause (dentro da control panel) */
     #playPauseButton {
       padding: 5px 10px;
       font-size: 16px;
@@ -82,7 +77,6 @@
       background-color: #444;
       color: #fff;
     }
-
     /* Container de categorias musicais */
     .categories {
       margin-top: 20px;
@@ -107,10 +101,9 @@
   <!-- Contador -->
   <div id="counter">BATIDAS CRIADAS: 0</div>
 
-  <!-- Jukebox -->
+  <!-- Jukebox com display e painel de controle (botão) -->
   <div class="jukebox">
     <div class="display"></div>
-    <!-- Botão de play/pause dentro do retângulo cinza -->
     <div class="control-panel">
       <button id="playPauseButton">play</button>
     </div>
@@ -129,7 +122,7 @@
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     const audioCtx = new AudioContext();
 
-    // Se o AudioContext estiver suspenso (por bloqueio de autoplay), retomamos com clique do usuário
+    // Retoma o áudio caso o contexto esteja suspenso (autoplay block)
     document.body.addEventListener('click', () => {
       if (audioCtx.state === 'suspended') {
         audioCtx.resume();
@@ -143,7 +136,7 @@
     let nextSongTimeout = null;
     let beatTimeouts = [];
 
-    // Definição das categorias musicais com seus parâmetros
+    // Parâmetros por categoria
     const categories = {
       classico: {
         scale: [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88],
@@ -151,14 +144,14 @@
         noteInterval: 0.15,
       },
       eletronica: {
-        scale: [523.25, 587.33, 659.25, 698.46, 783.99],
+        scale: [261.63, 329.63, 392.00, 523.25, 659.25],
         noteDuration: 0.05,
         noteInterval: 0.1,
       },
       rock: {
-        scale: [110, 130.81, 146.83, 164.81, 196, 220, 246.94],
-        noteDuration: 0.1,
-        noteInterval: 0.15,
+        scale: [82.41, 110, 130.81, 146.83, 164.81, 196, 220],
+        noteDuration: 0.15,
+        noteInterval: 0.3,
       },
       ambient: {
         scale: [130.81, 146.83, 164.81, 174.61, 196, 220, 246.94],
@@ -175,7 +168,7 @@
       return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-    // Função para animar o display da jukebox (alterando cor e realizando um breve efeito de escala)
+    // Animação do display da jukebox
     function animateDisplay() {
       const display = document.querySelector('.display');
       const randomHue = Math.floor(Math.random() * 360);
@@ -187,10 +180,32 @@
       }, 100);
     }
 
-    // Função que gera e toca uma “música” generativa de ritmo variado conforme a categoria selecionada
+    // Função para simular um drum hit (bateria) para o gênero rock
+    function playDrumHit(time) {
+      const bufferSize = audioCtx.sampleRate * 0.2;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = buffer;
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(1000, time);
+      const gainNode = audioCtx.createGain();
+      gainNode.gain.setValueAtTime(1, time);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, time + 0.2);
+      noise.connect(filter);
+      filter.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      noise.start(time);
+      noise.stop(time + 0.2);
+    }
+
+    // Função que gera e toca uma "música" generativa de acordo com o gênero selecionado
     function playSong() {
       if (!isPlaying) return;
-
       const category = categories[currentCategory];
       const scale = category.scale;
       const noteDuration = category.noteDuration;
@@ -199,7 +214,9 @@
       const startTime = audioCtx.currentTime;
 
       for (let i = 0; i < numNotes; i++) {
-        // Agenda a atualização do contador e a animação do display para cada batida
+        const noteTime = startTime + i * noteInterval;
+
+        // Atualiza o contador e anima o display a cada nota
         let beatTimeout = setTimeout(() => {
           if (!isPlaying) return;
           beatCount++;
@@ -208,29 +225,50 @@
         }, i * noteInterval * 1000);
         beatTimeouts.push(beatTimeout);
 
-        // Cria um oscilador com envelope de ganho curto para tocar a nota
+        // Cria o oscilador e nó de ganho para a nota
         const osc = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
-
-        // Seleciona aleatoriamente uma frequência da escala definida
         let freq = scale[getRandomInt(0, scale.length - 1)];
         if (Math.random() > 0.5) {
-          freq *= 2; // Em 50% das vezes, dobra a frequência (subindo uma oitava)
+          freq *= 2;
         }
-        osc.frequency.setValueAtTime(freq, startTime + i * noteInterval);
+        osc.frequency.setValueAtTime(freq, noteTime);
+
+        // Configurações específicas por gênero
+        if (currentCategory === "rock") {
+          osc.type = "sawtooth"; // timbre agressivo similar à guitarra
+          // A cada 4 notas, adiciona um drum hit para simular bateria
+          if (i % 4 === 0) {
+            playDrumHit(noteTime);
+          }
+        } else if (currentCategory === "eletronica") {
+          osc.type = "sawtooth"; // som techno
+          // Adiciona um LFO para vibrato, simulando um sintetizador
+          const lfo = audioCtx.createOscillator();
+          lfo.frequency.setValueAtTime(5, noteTime);
+          const lfoGain = audioCtx.createGain();
+          lfoGain.gain.setValueAtTime(10, noteTime);
+          lfo.connect(lfoGain);
+          lfoGain.connect(osc.frequency);
+          lfo.start(noteTime);
+          lfo.stop(noteTime + noteDuration);
+        } else if (currentCategory === "ambient") {
+          osc.type = "sine";
+        } else {
+          // Clássico
+          osc.type = "sine";
+        }
 
         // Cria um envelope simples para evitar cliques
-        gainNode.gain.setValueAtTime(0, startTime + i * noteInterval);
-        gainNode.gain.linearRampToValueAtTime(0.5, startTime + i * noteInterval + 0.01);
-        gainNode.gain.linearRampToValueAtTime(0, startTime + i * noteInterval + noteDuration);
+        gainNode.gain.setValueAtTime(0, noteTime);
+        gainNode.gain.linearRampToValueAtTime(0.5, noteTime + 0.01);
+        gainNode.gain.linearRampToValueAtTime(0, noteTime + noteDuration);
 
         osc.connect(gainNode);
         gainNode.connect(audioCtx.destination);
-        osc.start(startTime + i * noteInterval);
-        osc.stop(startTime + i * noteInterval + noteDuration);
+        osc.start(noteTime);
+        osc.stop(noteTime + noteDuration);
       }
-
-      // Agenda a próxima "música" para tocar quando esta terminar
       const totalDuration = numNotes * noteInterval + noteDuration;
       nextSongTimeout = setTimeout(() => {
         beatTimeouts = [];
@@ -238,7 +276,7 @@
       }, totalDuration * 1000);
     }
 
-    // Função para iniciar a reprodução
+    // Funções de controle da reprodução
     function startPlayback() {
       if (!isPlaying) {
         isPlaying = true;
@@ -247,7 +285,6 @@
       }
     }
 
-    // Função para pausar a reprodução
     function pausePlayback() {
       isPlaying = false;
       playPauseButton.textContent = 'play';
@@ -259,7 +296,6 @@
       beatTimeouts = [];
     }
 
-    // Evento de clique no botão de play/pause
     playPauseButton.addEventListener('click', () => {
       if (!isPlaying) {
         if (audioCtx.state === 'suspended') {
@@ -271,15 +307,12 @@
       }
     });
 
-    // Eventos para os botões de categoria musical
+    // Eventos para seleção de categorias musicais
     const categoryButtons = document.querySelectorAll('.category-button');
     categoryButtons.forEach(button => {
       button.addEventListener('click', () => {
-        // Remove a classe ativa de todos os botões
         categoryButtons.forEach(btn => btn.classList.remove('active'));
-        // Adiciona a classe ativa ao botão clicado
         button.classList.add('active');
-        // Atualiza a categoria musical atual
         currentCategory = button.getAttribute('data-category');
       });
     });
