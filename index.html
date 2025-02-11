@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Jukebox Generativa – Mesa de DJ</title>
+  <title>Jukebox Generativa – Mesa de DJ com Markov</title>
   <style>
     /* Estilização geral */
     body {
@@ -184,6 +184,19 @@
         <option value="minor">Minor (A)</option>
       </select>
     </div>
+    
+    <!-- Ativar modo Markov -->
+    <div class="control">
+      <label for="useMarkov">Usar Cadeia de Markov</label>
+      <input type="checkbox" id="useMarkov">
+    </div>
+    
+    <!-- Variância da cadeia Markov (passo máximo) -->
+    <div class="control">
+      <label for="markovVariance">Markov Variance</label>
+      <input type="range" id="markovVariance" min="1" max="3" step="1" value="1">
+      <span id="markovVarianceValue">1</span>
+    </div>
   </div>
 
   <script>
@@ -208,8 +221,8 @@
     }
 
     // Atualiza os valores exibidos dos controles do tipo range
-    const controls = ['noteDuration', 'noteInterval', 'lfoFrequency', 'lfoDepth'];
-    controls.forEach(id => {
+    const rangeControls = ['noteDuration', 'noteInterval', 'lfoFrequency', 'lfoDepth', 'markovVariance'];
+    rangeControls.forEach(id => {
       const slider = document.getElementById(id);
       const display = document.getElementById(id + 'Value');
       slider.addEventListener('input', () => {
@@ -252,7 +265,20 @@
       noise.stop(time + 0.2);
     }
 
-    // Função principal: gera e toca a música conforme os parâmetros da mesa de DJ
+    // Função que, em modo Markov, escolhe o próximo índice na escala com base no atual
+    function getNextMarkovIndex(currentIndex, scaleLength, variance) {
+      let possibleIndices = [];
+      for (let d = -variance; d <= variance; d++) {
+        const nextIndex = currentIndex + d;
+        if (nextIndex >= 0 && nextIndex < scaleLength) {
+          possibleIndices.push(nextIndex);
+        }
+      }
+      return possibleIndices[getRandomInt(0, possibleIndices.length - 1)];
+    }
+
+    // Função principal: gera e toca a música conforme os parâmetros da mesa de DJ,
+    // utilizando uma cadeia de Markov para a seleção das notas, se ativado.
     function playSong() {
       if (!isPlaying) return;
 
@@ -267,6 +293,8 @@
       const minNotes = parseInt(document.getElementById('minNotes').value);
       const maxNotes = parseInt(document.getElementById('maxNotes').value);
       const scaleSelect = document.getElementById('scaleSelect').value;
+      const useMarkov = document.getElementById('useMarkov').checked;
+      const markovVariance = parseInt(document.getElementById('markovVariance').value);
 
       // Define as escalas disponíveis
       const scales = {
@@ -275,10 +303,13 @@
       };
       const scale = scales[scaleSelect] || scales.major;
       
-      // Define um número aleatório de notas para esta "música"
+      // Define o número de notas para esta sequência
       const numNotes = getRandomInt(minNotes, maxNotes);
       const startTime = audioCtx.currentTime;
-
+      
+      // Se o modo Markov estiver ativado, iniciamos com um índice aleatório
+      let currentMarkovIndex = useMarkov ? getRandomInt(0, scale.length - 1) : null;
+      
       for (let i = 0; i < numNotes; i++) {
         const noteTime = startTime + i * noteInterval;
         
@@ -294,9 +325,17 @@
         // Cria o oscilador e o nó de ganho para a nota
         const osc = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
-        
-        // Escolhe uma frequência aleatória da escala
-        let freq = scale[getRandomInt(0, scale.length - 1)];
+        let freq;
+        if (useMarkov) {
+          // Seleciona a próxima nota usando a cadeia de Markov
+          if (i > 0) {
+            currentMarkovIndex = getNextMarkovIndex(currentMarkovIndex, scale.length, markovVariance);
+          }
+          freq = scale[currentMarkovIndex];
+        } else {
+          // Seleção aleatória simples
+          freq = scale[getRandomInt(0, scale.length - 1)];
+        }
         if (randomOctave && Math.random() > 0.5) {
           freq *= 2;
         }
