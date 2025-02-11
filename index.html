@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Jukebox Generativa – Mesa de DJ com Markov</title>
+  <title>Mesa de DJ Profissional com Tone.js</title>
+  <!-- Inclua Tone.js a partir de um CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/tone@next/build/Tone.js"></script>
   <style>
     /* Estilização geral */
     body {
@@ -13,8 +15,6 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
-      min-height: 100vh;
       font-family: sans-serif;
       color: #fff;
     }
@@ -35,6 +35,7 @@
       align-items: center;
       justify-content: center;
       position: relative;
+      margin-bottom: 20px;
     }
     .display {
       width: 80%;
@@ -49,7 +50,6 @@
     }
     /* Mesa de DJ */
     .dj-table {
-      margin: 20px;
       padding: 20px;
       background-color: #222;
       border: 2px solid #fff;
@@ -60,29 +60,30 @@
       grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: 15px;
       color: #fff;
+      margin-bottom: 40px;
     }
     .dj-table h2 {
       grid-column: 1 / -1;
       text-align: center;
       margin-bottom: 10px;
     }
-    .dj-table .control {
+    .control {
       display: flex;
       flex-direction: column;
       align-items: center;
     }
-    .dj-table .control label {
+    .control label {
       margin-bottom: 5px;
     }
-    .dj-table .control input[type="range"],
-    .dj-table .control select,
-    .dj-table .control input[type="number"] {
+    .control input[type="range"],
+    .control select,
+    .control input[type="number"] {
       width: 100%;
     }
-    .dj-table .control span {
+    .control span {
       margin-top: 5px;
     }
-    .dj-table .control button {
+    .control button {
       padding: 10px 20px;
       font-size: 16px;
       cursor: pointer;
@@ -96,18 +97,18 @@
 </head>
 <body>
   <!-- Contador de batidas -->
-  <div id="counter">BATIDAS CRIADAS: 0</div>
+  <div id="counter">Batidas: 0</div>
   
   <!-- Jukebox -->
   <div class="jukebox">
     <div class="display">Display</div>
   </div>
   
-  <!-- Mesa de DJ dinâmica -->
+  <!-- Mesa de DJ com Tone.js -->
   <div class="dj-table">
-    <h2>Mesa de DJ</h2>
+    <h2>Mesa de DJ com Tone.js</h2>
     
-    <!-- Toggle de Play/Pause -->
+    <!-- Play/Pause -->
     <div class="control">
       <label for="togglePlayback">Play/Pause</label>
       <button id="togglePlayback">Play</button>
@@ -118,65 +119,41 @@
       <label for="oscType">Oscillator Type</label>
       <select id="oscType">
         <option value="sine">Sine</option>
-        <option value="sawtooth">Sawtooth</option>
         <option value="square">Square</option>
         <option value="triangle">Triangle</option>
+        <option value="sawtooth">Sawtooth</option>
       </select>
     </div>
     
     <!-- Duração da Nota -->
     <div class="control">
       <label for="noteDuration">Note Duration (s)</label>
-      <input type="range" id="noteDuration" min="0.05" max="0.5" step="0.01" value="0.1">
-      <span id="noteDurationValue">0.1</span>
+      <input type="range" id="noteDuration" min="0.1" max="1" step="0.1" value="0.5">
+      <span id="noteDurationValue">0.5</span>
     </div>
     
     <!-- Intervalo entre Notas -->
     <div class="control">
       <label for="noteInterval">Note Interval (s)</label>
-      <input type="range" id="noteInterval" min="0.05" max="1" step="0.05" value="0.15">
-      <span id="noteIntervalValue">0.15</span>
+      <input type="range" id="noteInterval" min="0.1" max="2" step="0.1" value="1">
+      <span id="noteIntervalValue">1</span>
     </div>
     
-    <!-- Frequência do LFO -->
+    <!-- LFO: Frequência -->
     <div class="control">
       <label for="lfoFrequency">LFO Frequency (Hz)</label>
-      <input type="range" id="lfoFrequency" min="0" max="20" step="0.1" value="5">
+      <input type="range" id="lfoFrequency" min="0" max="10" step="0.1" value="5">
       <span id="lfoFrequencyValue">5</span>
     </div>
     
-    <!-- Profundidade do LFO -->
+    <!-- LFO: Profundidade -->
     <div class="control">
       <label for="lfoDepth">LFO Depth</label>
-      <input type="range" id="lfoDepth" min="0" max="50" step="1" value="10">
-      <span id="lfoDepthValue">10</span>
+      <input type="range" id="lfoDepth" min="0" max="100" step="1" value="20">
+      <span id="lfoDepthValue">20</span>
     </div>
     
-    <!-- Habilitar batidas de bateria -->
-    <div class="control">
-      <label for="enableDrums">Drum Hits (Rock)</label>
-      <input type="checkbox" id="enableDrums" checked>
-    </div>
-    
-    <!-- Octava aleatória -->
-    <div class="control">
-      <label for="randomOctave">Random Octave</label>
-      <input type="checkbox" id="randomOctave" checked>
-    </div>
-    
-    <!-- Número mínimo de notas -->
-    <div class="control">
-      <label for="minNotes">Min Notes</label>
-      <input type="number" id="minNotes" min="4" max="32" value="8">
-    </div>
-    
-    <!-- Número máximo de notas -->
-    <div class="control">
-      <label for="maxNotes">Max Notes</label>
-      <input type="number" id="maxNotes" min="4" max="32" value="16">
-    </div>
-    
-    <!-- Seleção da escala -->
+    <!-- Seleção da Escala -->
     <div class="control">
       <label for="scaleSelect">Scale</label>
       <select id="scaleSelect">
@@ -184,228 +161,112 @@
         <option value="minor">Minor (A)</option>
       </select>
     </div>
-    
-    <!-- Ativar modo Markov -->
-    <div class="control">
-      <label for="useMarkov">Usar Cadeia de Markov</label>
-      <input type="checkbox" id="useMarkov">
-    </div>
-    
-    <!-- Variância da cadeia Markov (passo máximo) -->
-    <div class="control">
-      <label for="markovVariance">Markov Variance</label>
-      <input type="range" id="markovVariance" min="1" max="3" step="1" value="1">
-      <span id="markovVarianceValue">1</span>
-    </div>
   </div>
 
   <script>
-    // Configuração da API Web Audio
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    const audioCtx = new AudioContext();
-    document.body.addEventListener('click', () => {
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
-    });
-
-    let isPlaying = false;
-    let beatCount = 0;
-    const counterEl = document.getElementById('counter');
-    let nextSongTimeout = null;
-    let beatTimeouts = [];
-
-    // Função auxiliar para gerar inteiros aleatórios
-    function getRandomInt(min, max) {
-      return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
-
+    // Define escalas
+    const scales = {
+      major: ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4'],
+      minor: ['A3', 'B3', 'C4', 'D4', 'E4', 'F4', 'G4']
+    };
+    let currentScale = scales.major;
+    
     // Atualiza os valores exibidos dos controles do tipo range
-    const rangeControls = ['noteDuration', 'noteInterval', 'lfoFrequency', 'lfoDepth', 'markovVariance'];
-    rangeControls.forEach(id => {
+    const updateDisplay = id => {
       const slider = document.getElementById(id);
       const display = document.getElementById(id + 'Value');
       slider.addEventListener('input', () => {
         display.textContent = slider.value;
       });
+    }
+    ['noteDuration', 'noteInterval', 'lfoFrequency', 'lfoDepth'].forEach(updateDisplay);
+
+    // Cria um sintetizador Tone.js e o conecta à saída
+    const synth = new Tone.Synth({
+      oscillator: {
+        type: document.getElementById('oscType').value
+      }
+    }).toDestination();
+
+    // Atualiza o tipo do oscilador conforme a seleção
+    document.getElementById('oscType').addEventListener('change', (e) => {
+      synth.oscillator.type = e.target.value;
     });
 
-    // Anima o display da jukebox
-    function animateDisplay() {
-      const display = document.querySelector('.display');
-      const randomHue = Math.floor(Math.random() * 360);
-      display.style.backgroundColor = `hsl(${randomHue}, 100%, 50%)`;
-      display.style.transform = 'scale(1.2)';
-      setTimeout(() => {
-        display.style.transform = 'scale(1)';
-        display.style.backgroundColor = '#000';
-      }, 100);
-    }
+    // Atualiza a escala selecionada
+    document.getElementById('scaleSelect').addEventListener('change', (e) => {
+      currentScale = scales[e.target.value] || scales.major;
+    });
 
-    // Função para tocar um drum hit (simula bateria)
-    function playDrumHit(time) {
-      const bufferSize = audioCtx.sampleRate * 0.2;
-      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        data[i] = Math.random() * 2 - 1;
-      }
-      const noise = audioCtx.createBufferSource();
-      noise.buffer = buffer;
-      const filter = audioCtx.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(1000, time);
-      const gainNode = audioCtx.createGain();
-      gainNode.gain.setValueAtTime(1, time);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, time + 0.2);
-      noise.connect(filter);
-      filter.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
-      noise.start(time);
-      noise.stop(time + 0.2);
-    }
+    // Cria um LFO para modulação da frequência
+    const lfo = new Tone.LFO({
+      frequency: parseFloat(document.getElementById('lfoFrequency').value),
+      min: -parseFloat(document.getElementById('lfoDepth').value),
+      max: parseFloat(document.getElementById('lfoDepth').value)
+    }).start();
+    // Conecta o LFO ao parâmetro de frequência do sintetizador
+    lfo.connect(synth.frequency);
 
-    // Função que, em modo Markov, escolhe o próximo índice na escala com base no atual
-    function getNextMarkovIndex(currentIndex, scaleLength, variance) {
-      let possibleIndices = [];
-      for (let d = -variance; d <= variance; d++) {
-        const nextIndex = currentIndex + d;
-        if (nextIndex >= 0 && nextIndex < scaleLength) {
-          possibleIndices.push(nextIndex);
-        }
-      }
-      return possibleIndices[getRandomInt(0, possibleIndices.length - 1)];
-    }
+    // Atualiza os parâmetros do LFO conforme os controles
+    document.getElementById('lfoFrequency').addEventListener('input', (e) => {
+      lfo.frequency.value = parseFloat(e.target.value);
+    });
+    document.getElementById('lfoDepth').addEventListener('input', (e) => {
+      const depth = parseFloat(e.target.value);
+      lfo.min = -depth;
+      lfo.max = depth;
+    });
 
-    // Função principal: gera e toca a música conforme os parâmetros da mesa de DJ,
-    // utilizando uma cadeia de Markov para a seleção das notas, se ativado.
-    function playSong() {
-      if (!isPlaying) return;
+    // Cria um Tone.Sequence para agendar a execução das notas
+    let seq;
+    let beatCount = 0;
+    const counterEl = document.getElementById('counter');
 
-      // Obtém os parâmetros dos controles
-      const oscType = document.getElementById('oscType').value;
+    function createSequence() {
       const noteDuration = parseFloat(document.getElementById('noteDuration').value);
       const noteInterval = parseFloat(document.getElementById('noteInterval').value);
-      const lfoFrequency = parseFloat(document.getElementById('lfoFrequency').value);
-      const lfoDepth = parseFloat(document.getElementById('lfoDepth').value);
-      const enableDrums = document.getElementById('enableDrums').checked;
-      const randomOctave = document.getElementById('randomOctave').checked;
-      const minNotes = parseInt(document.getElementById('minNotes').value);
-      const maxNotes = parseInt(document.getElementById('maxNotes').value);
-      const scaleSelect = document.getElementById('scaleSelect').value;
-      const useMarkov = document.getElementById('useMarkov').checked;
-      const markovVariance = parseInt(document.getElementById('markovVariance').value);
-
-      // Define as escalas disponíveis
-      const scales = {
-        major: [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88], // C major
-        minor: [220, 246.94, 261.63, 293.66, 329.63, 349.23, 392.00]       // A minor
-      };
-      const scale = scales[scaleSelect] || scales.major;
       
-      // Define o número de notas para esta sequência
-      const numNotes = getRandomInt(minNotes, maxNotes);
-      const startTime = audioCtx.currentTime;
+      // Gera um padrão de 16 passos com notas aleatórias da escala selecionada
+      const notes = Array.from({ length: 16 }, () =>
+        currentScale[Math.floor(Math.random() * currentScale.length)]
+      );
       
-      // Se o modo Markov estiver ativado, iniciamos com um índice aleatório
-      let currentMarkovIndex = useMarkov ? getRandomInt(0, scale.length - 1) : null;
-      
-      for (let i = 0; i < numNotes; i++) {
-        const noteTime = startTime + i * noteInterval;
-        
-        // Agenda a animação do display e atualização do contador
-        let beatTimeout = setTimeout(() => {
-          if (!isPlaying) return;
-          beatCount++;
-          counterEl.textContent = 'BATIDAS CRIADAS: ' + beatCount;
-          animateDisplay();
-        }, i * noteInterval * 1000);
-        beatTimeouts.push(beatTimeout);
-        
-        // Cria o oscilador e o nó de ganho para a nota
-        const osc = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        let freq;
-        if (useMarkov) {
-          // Seleciona a próxima nota usando a cadeia de Markov
-          if (i > 0) {
-            currentMarkovIndex = getNextMarkovIndex(currentMarkovIndex, scale.length, markovVariance);
-          }
-          freq = scale[currentMarkovIndex];
-        } else {
-          // Seleção aleatória simples
-          freq = scale[getRandomInt(0, scale.length - 1)];
-        }
-        if (randomOctave && Math.random() > 0.5) {
-          freq *= 2;
-        }
-        osc.frequency.setValueAtTime(freq, noteTime);
-        osc.type = oscType;
-        
-        // Aplica modulação LFO se configurada
-        if (lfoFrequency > 0 && lfoDepth > 0) {
-          const lfo = audioCtx.createOscillator();
-          lfo.frequency.setValueAtTime(lfoFrequency, noteTime);
-          const lfoGain = audioCtx.createGain();
-          lfoGain.gain.setValueAtTime(lfoDepth, noteTime);
-          lfo.connect(lfoGain);
-          lfoGain.connect(osc.frequency);
-          lfo.start(noteTime);
-          lfo.stop(noteTime + noteDuration);
-        }
-        
-        // Cria um envelope para a nota
-        gainNode.gain.setValueAtTime(0, noteTime);
-        gainNode.gain.linearRampToValueAtTime(0.5, noteTime + 0.01);
-        gainNode.gain.linearRampToValueAtTime(0, noteTime + noteDuration);
-        
-        osc.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        osc.start(noteTime);
-        osc.stop(noteTime + noteDuration);
-        
-        // Se ativado, adiciona um drum hit a cada 4ª nota
-        if (enableDrums && i % 4 === 0) {
-          playDrumHit(noteTime);
-        }
+      // Se já existir uma sequência, a descartamos
+      if (seq) {
+        seq.dispose();
       }
       
-      // Agenda a próxima execução de playSong
-      const totalDuration = numNotes * noteInterval + noteDuration;
-      nextSongTimeout = setTimeout(() => {
-        beatTimeouts = [];
-        playSong();
-      }, totalDuration * 1000);
+      // Cria uma nova sequência que toca cada nota e atualiza o display
+      seq = new Tone.Sequence((time, note) => {
+        synth.triggerAttackRelease(note, noteDuration, time);
+        beatCount++;
+        counterEl.textContent = 'Batidas: ' + beatCount;
+        // Anima o display alterando a cor
+        document.querySelector('.display').style.backgroundColor = 
+          `hsl(${Math.floor(Math.random() * 360)}, 100%, 50%)`;
+      }, notes, noteInterval).start(0);
     }
-    
-    // Controles de Playback
-    function startPlayback() {
+    createSequence();
+
+    // Sempre que os controles de sequência forem alterados, recria a sequência
+    ['noteDuration', 'noteInterval', 'scaleSelect'].forEach(id => {
+      document.getElementById(id).addEventListener('input', createSequence);
+      document.getElementById(id).addEventListener('change', createSequence);
+    });
+
+    // Controle de Playback com Tone.Transport
+    let isPlaying = false;
+    document.getElementById('togglePlayback').addEventListener('click', async () => {
       if (!isPlaying) {
+        // Garantir que o contexto de áudio esteja ativo
+        await Tone.start();
+        Tone.Transport.start();
         isPlaying = true;
         document.getElementById('togglePlayback').textContent = 'Pause';
-        playSong();
-      }
-    }
-    
-    function pausePlayback() {
-      isPlaying = false;
-      document.getElementById('togglePlayback').textContent = 'Play';
-      if (nextSongTimeout) {
-        clearTimeout(nextSongTimeout);
-        nextSongTimeout = null;
-      }
-      beatTimeouts.forEach(timeout => clearTimeout(timeout));
-      beatTimeouts = [];
-    }
-    
-    document.getElementById('togglePlayback').addEventListener('click', () => {
-      if (!isPlaying) {
-        if (audioCtx.state === 'suspended') {
-          audioCtx.resume();
-        }
-        startPlayback();
       } else {
-        pausePlayback();
+        Tone.Transport.stop();
+        isPlaying = false;
+        document.getElementById('togglePlayback').textContent = 'Play';
       }
     });
   </script>
