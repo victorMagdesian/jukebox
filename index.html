@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Jukebox Generativa</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Jukebox Generativa – Mesa de DJ</title>
   <style>
-    /* Estilização geral: fundo preto, centralização vertical e horizontal */
+    /* Estilização geral */
     body {
       margin: 0;
       padding: 0;
@@ -13,116 +13,183 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      height: 100vh;
+      justify-content: flex-start;
+      min-height: 100vh;
       font-family: sans-serif;
       color: #fff;
     }
-    /* Contador acima da jukebox */
     #counter {
       font-size: 24px;
-      margin-bottom: 20px;
+      margin: 20px 0;
     }
-    /* Estilização da jukebox */
+    /* Jukebox */
     .jukebox {
       width: 300px;
       height: 400px;
       background: linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet);
       border: 5px solid #fff;
       border-radius: 15px;
-      position: relative;
       box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
       overflow: hidden;
       display: flex;
-      flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
-      padding-top: 20px;
+      justify-content: center;
+      position: relative;
     }
-    /* Display superior da jukebox (para animação) */
     .display {
       width: 80%;
-      height: 40%;
+      height: 50%;
       background: #000;
       border: 2px solid #fff;
       border-radius: 5px;
-      margin-bottom: 20px;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: background-color 0.1s ease, transform 0.1s ease;
     }
-    /* Control panel: retângulo cinza central para o botão */
-    .control-panel {
-      position: absolute;
-      bottom: 10%;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 60%;
-      height: 10%;
-      background: silver;
+    /* Mesa de DJ */
+    .dj-table {
+      margin: 20px;
+      padding: 20px;
+      background-color: #222;
       border: 2px solid #fff;
-      border-radius: 5px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 600px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      color: #fff;
+    }
+    .dj-table h2 {
+      grid-column: 1 / -1;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .dj-table .control {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: center;
     }
-    /* Botão de play/pause (dentro da control panel) */
-    #playPauseButton {
-      padding: 5px 10px;
+    .dj-table .control label {
+      margin-bottom: 5px;
+    }
+    .dj-table .control input[type="range"],
+    .dj-table .control select,
+    .dj-table .control input[type="number"] {
+      width: 100%;
+    }
+    .dj-table .control span {
+      margin-top: 5px;
+    }
+    .dj-table .control button {
+      padding: 10px 20px;
       font-size: 16px;
       cursor: pointer;
       border: none;
       border-radius: 5px;
       background-color: #444;
       color: #fff;
-    }
-    /* Container de categorias musicais */
-    .categories {
-      margin-top: 20px;
-      display: flex;
-      gap: 10px;
-    }
-    .category-button {
-      padding: 8px 16px;
-      font-size: 16px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      background-color: #444;
-      color: #fff;
-    }
-    .category-button.active {
-      background-color: #888;
+      width: 100%;
     }
   </style>
 </head>
 <body>
-  <!-- Contador -->
+  <!-- Contador de batidas -->
   <div id="counter">BATIDAS CRIADAS: 0</div>
-
-  <!-- Jukebox com display e painel de controle (botão) -->
+  
+  <!-- Jukebox -->
   <div class="jukebox">
-    <div class="display"></div>
-    <div class="control-panel">
-      <button id="playPauseButton">play</button>
-    </div>
+    <div class="display">Display</div>
   </div>
-
-  <!-- Botões de seleção de categorias musicais -->
-  <div class="categories">
-    <button data-category="classico" class="category-button active">Clássico</button>
-    <button data-category="eletronica" class="category-button">Eletrônica</button>
-    <button data-category="rock" class="category-button">Rock</button>
-    <button data-category="ambient" class="category-button">Ambient</button>
+  
+  <!-- Mesa de DJ dinâmica -->
+  <div class="dj-table">
+    <h2>Mesa de DJ</h2>
+    
+    <!-- Toggle de Play/Pause -->
+    <div class="control">
+      <label for="togglePlayback">Play/Pause</label>
+      <button id="togglePlayback">Play</button>
+    </div>
+    
+    <!-- Tipo de Oscilador -->
+    <div class="control">
+      <label for="oscType">Oscillator Type</label>
+      <select id="oscType">
+        <option value="sine">Sine</option>
+        <option value="sawtooth">Sawtooth</option>
+        <option value="square">Square</option>
+        <option value="triangle">Triangle</option>
+      </select>
+    </div>
+    
+    <!-- Duração da Nota -->
+    <div class="control">
+      <label for="noteDuration">Note Duration (s)</label>
+      <input type="range" id="noteDuration" min="0.05" max="0.5" step="0.01" value="0.1">
+      <span id="noteDurationValue">0.1</span>
+    </div>
+    
+    <!-- Intervalo entre Notas -->
+    <div class="control">
+      <label for="noteInterval">Note Interval (s)</label>
+      <input type="range" id="noteInterval" min="0.05" max="1" step="0.05" value="0.15">
+      <span id="noteIntervalValue">0.15</span>
+    </div>
+    
+    <!-- Frequência do LFO -->
+    <div class="control">
+      <label for="lfoFrequency">LFO Frequency (Hz)</label>
+      <input type="range" id="lfoFrequency" min="0" max="20" step="0.1" value="5">
+      <span id="lfoFrequencyValue">5</span>
+    </div>
+    
+    <!-- Profundidade do LFO -->
+    <div class="control">
+      <label for="lfoDepth">LFO Depth</label>
+      <input type="range" id="lfoDepth" min="0" max="50" step="1" value="10">
+      <span id="lfoDepthValue">10</span>
+    </div>
+    
+    <!-- Habilitar batidas de bateria -->
+    <div class="control">
+      <label for="enableDrums">Drum Hits (Rock)</label>
+      <input type="checkbox" id="enableDrums" checked>
+    </div>
+    
+    <!-- Octava aleatória -->
+    <div class="control">
+      <label for="randomOctave">Random Octave</label>
+      <input type="checkbox" id="randomOctave" checked>
+    </div>
+    
+    <!-- Número mínimo de notas -->
+    <div class="control">
+      <label for="minNotes">Min Notes</label>
+      <input type="number" id="minNotes" min="4" max="32" value="8">
+    </div>
+    
+    <!-- Número máximo de notas -->
+    <div class="control">
+      <label for="maxNotes">Max Notes</label>
+      <input type="number" id="maxNotes" min="4" max="32" value="16">
+    </div>
+    
+    <!-- Seleção da escala -->
+    <div class="control">
+      <label for="scaleSelect">Scale</label>
+      <select id="scaleSelect">
+        <option value="major">Major (C)</option>
+        <option value="minor">Minor (A)</option>
+      </select>
+    </div>
   </div>
 
   <script>
     // Configuração da API Web Audio
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     const audioCtx = new AudioContext();
-
-    // Retoma o áudio caso o contexto esteja suspenso (autoplay block)
     document.body.addEventListener('click', () => {
       if (audioCtx.state === 'suspended') {
         audioCtx.resume();
@@ -132,43 +199,25 @@
     let isPlaying = false;
     let beatCount = 0;
     const counterEl = document.getElementById('counter');
-    const playPauseButton = document.getElementById('playPauseButton');
     let nextSongTimeout = null;
     let beatTimeouts = [];
 
-    // Parâmetros por categoria
-    const categories = {
-      classico: {
-        scale: [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88],
-        noteDuration: 0.1,
-        noteInterval: 0.15,
-      },
-      eletronica: {
-        scale: [261.63, 329.63, 392.00, 523.25, 659.25],
-        noteDuration: 0.05,
-        noteInterval: 0.1,
-      },
-      rock: {
-        scale: [82.41, 110, 130.81, 146.83, 164.81, 196, 220],
-        noteDuration: 0.15,
-        noteInterval: 0.3,
-      },
-      ambient: {
-        scale: [130.81, 146.83, 164.81, 174.61, 196, 220, 246.94],
-        noteDuration: 0.3,
-        noteInterval: 0.4,
-      }
-    };
-
-    // Categoria musical selecionada (padrão: clássico)
-    let currentCategory = 'classico';
-
-    // Função auxiliar para gerar inteiros aleatórios entre min e max (inclusive)
+    // Função auxiliar para gerar inteiros aleatórios
     function getRandomInt(min, max) {
       return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-    // Animação do display da jukebox
+    // Atualiza os valores exibidos dos controles do tipo range
+    const controls = ['noteDuration', 'noteInterval', 'lfoFrequency', 'lfoDepth'];
+    controls.forEach(id => {
+      const slider = document.getElementById(id);
+      const display = document.getElementById(id + 'Value');
+      slider.addEventListener('input', () => {
+        display.textContent = slider.value;
+      });
+    });
+
+    // Anima o display da jukebox
     function animateDisplay() {
       const display = document.querySelector('.display');
       const randomHue = Math.floor(Math.random() * 360);
@@ -180,7 +229,7 @@
       }, 100);
     }
 
-    // Função para simular um drum hit (bateria) para o gênero rock
+    // Função para tocar um drum hit (simula bateria)
     function playDrumHit(time) {
       const bufferSize = audioCtx.sampleRate * 0.2;
       const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
@@ -203,20 +252,37 @@
       noise.stop(time + 0.2);
     }
 
-    // Função que gera e toca uma "música" generativa de acordo com o gênero selecionado
+    // Função principal: gera e toca a música conforme os parâmetros da mesa de DJ
     function playSong() {
       if (!isPlaying) return;
-      const category = categories[currentCategory];
-      const scale = category.scale;
-      const noteDuration = category.noteDuration;
-      const noteInterval = category.noteInterval;
-      const numNotes = getRandomInt(8, 16);
+
+      // Obtém os parâmetros dos controles
+      const oscType = document.getElementById('oscType').value;
+      const noteDuration = parseFloat(document.getElementById('noteDuration').value);
+      const noteInterval = parseFloat(document.getElementById('noteInterval').value);
+      const lfoFrequency = parseFloat(document.getElementById('lfoFrequency').value);
+      const lfoDepth = parseFloat(document.getElementById('lfoDepth').value);
+      const enableDrums = document.getElementById('enableDrums').checked;
+      const randomOctave = document.getElementById('randomOctave').checked;
+      const minNotes = parseInt(document.getElementById('minNotes').value);
+      const maxNotes = parseInt(document.getElementById('maxNotes').value);
+      const scaleSelect = document.getElementById('scaleSelect').value;
+
+      // Define as escalas disponíveis
+      const scales = {
+        major: [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88], // C major
+        minor: [220, 246.94, 261.63, 293.66, 329.63, 349.23, 392.00]       // A minor
+      };
+      const scale = scales[scaleSelect] || scales.major;
+      
+      // Define um número aleatório de notas para esta "música"
+      const numNotes = getRandomInt(minNotes, maxNotes);
       const startTime = audioCtx.currentTime;
 
       for (let i = 0; i < numNotes; i++) {
         const noteTime = startTime + i * noteInterval;
-
-        // Atualiza o contador e anima o display a cada nota
+        
+        // Agenda a animação do display e atualização do contador
         let beatTimeout = setTimeout(() => {
           if (!isPlaying) return;
           beatCount++;
@@ -224,70 +290,67 @@
           animateDisplay();
         }, i * noteInterval * 1000);
         beatTimeouts.push(beatTimeout);
-
-        // Cria o oscilador e nó de ganho para a nota
+        
+        // Cria o oscilador e o nó de ganho para a nota
         const osc = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
+        
+        // Escolhe uma frequência aleatória da escala
         let freq = scale[getRandomInt(0, scale.length - 1)];
-        if (Math.random() > 0.5) {
+        if (randomOctave && Math.random() > 0.5) {
           freq *= 2;
         }
         osc.frequency.setValueAtTime(freq, noteTime);
-
-        // Configurações específicas por gênero
-        if (currentCategory === "rock") {
-          osc.type = "sawtooth"; // timbre agressivo similar à guitarra
-          // A cada 4 notas, adiciona um drum hit para simular bateria
-          if (i % 4 === 0) {
-            playDrumHit(noteTime);
-          }
-        } else if (currentCategory === "eletronica") {
-          osc.type = "sawtooth"; // som techno
-          // Adiciona um LFO para vibrato, simulando um sintetizador
+        osc.type = oscType;
+        
+        // Aplica modulação LFO se configurada
+        if (lfoFrequency > 0 && lfoDepth > 0) {
           const lfo = audioCtx.createOscillator();
-          lfo.frequency.setValueAtTime(5, noteTime);
+          lfo.frequency.setValueAtTime(lfoFrequency, noteTime);
           const lfoGain = audioCtx.createGain();
-          lfoGain.gain.setValueAtTime(10, noteTime);
+          lfoGain.gain.setValueAtTime(lfoDepth, noteTime);
           lfo.connect(lfoGain);
           lfoGain.connect(osc.frequency);
           lfo.start(noteTime);
           lfo.stop(noteTime + noteDuration);
-        } else if (currentCategory === "ambient") {
-          osc.type = "sine";
-        } else {
-          // Clássico
-          osc.type = "sine";
         }
-
-        // Cria um envelope simples para evitar cliques
+        
+        // Cria um envelope para a nota
         gainNode.gain.setValueAtTime(0, noteTime);
         gainNode.gain.linearRampToValueAtTime(0.5, noteTime + 0.01);
         gainNode.gain.linearRampToValueAtTime(0, noteTime + noteDuration);
-
+        
         osc.connect(gainNode);
         gainNode.connect(audioCtx.destination);
         osc.start(noteTime);
         osc.stop(noteTime + noteDuration);
+        
+        // Se ativado, adiciona um drum hit a cada 4ª nota
+        if (enableDrums && i % 4 === 0) {
+          playDrumHit(noteTime);
+        }
       }
+      
+      // Agenda a próxima execução de playSong
       const totalDuration = numNotes * noteInterval + noteDuration;
       nextSongTimeout = setTimeout(() => {
         beatTimeouts = [];
         playSong();
       }, totalDuration * 1000);
     }
-
-    // Funções de controle da reprodução
+    
+    // Controles de Playback
     function startPlayback() {
       if (!isPlaying) {
         isPlaying = true;
-        playPauseButton.textContent = 'pause';
+        document.getElementById('togglePlayback').textContent = 'Pause';
         playSong();
       }
     }
-
+    
     function pausePlayback() {
       isPlaying = false;
-      playPauseButton.textContent = 'play';
+      document.getElementById('togglePlayback').textContent = 'Play';
       if (nextSongTimeout) {
         clearTimeout(nextSongTimeout);
         nextSongTimeout = null;
@@ -295,8 +358,8 @@
       beatTimeouts.forEach(timeout => clearTimeout(timeout));
       beatTimeouts = [];
     }
-
-    playPauseButton.addEventListener('click', () => {
+    
+    document.getElementById('togglePlayback').addEventListener('click', () => {
       if (!isPlaying) {
         if (audioCtx.state === 'suspended') {
           audioCtx.resume();
@@ -305,16 +368,6 @@
       } else {
         pausePlayback();
       }
-    });
-
-    // Eventos para seleção de categorias musicais
-    const categoryButtons = document.querySelectorAll('.category-button');
-    categoryButtons.forEach(button => {
-      button.addEventListener('click', () => {
-        categoryButtons.forEach(btn => btn.classList.remove('active'));
-        button.classList.add('active');
-        currentCategory = button.getAttribute('data-category');
-      });
     });
   </script>
 </body>
